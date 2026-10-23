@@ -1,0 +1,4237 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大須商店街食べ歩きマップ(改)</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js"></script>
+    <style>
+        #panorama {
+            display: block;
+        }
+
+        .tooltip {
+            position: absolute;
+            display: none;
+            background-color: white;
+            padding: 14px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.08);
+            z-index: 1000;
+            width: 260px; 
+            transform: translate(-50%, -100%); 
+            margin-top: -10px;
+            white-space: normal;
+            word-break: break-all;
+        }
+
+        .tooltip-img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            object-fit: cover;
+        }
+
+        .tooltip-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+        }
+
+        .tooltip-desc {
+            font-size: 12px;
+            color: #475569;
+            margin: 0 0 10px 0;
+            line-height: 1.4;
+        }
+
+        .meta-box {
+            background-color: #f8fafc;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 10.5px;
+            color: #64748b;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .meta-box > div {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow-x: auto;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .meta-box > div::-webkit-scrollbar {
+            display: none;
+        }
+
+        .meta-box > div:last-child {
+            margin-bottom: 0;
+        }
+        
+        .meta-box i {
+            width: 14px;
+            margin-right: 4px;
+            color: #94a3b8;
+        }
+
+        .link-container {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 8px;
+            padding-top: 10px;
+            border-top: 1px solid #f1f5f9;
+        }
+
+        .btn-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #f1f5f9;
+            font-size: 16px;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+        .btn-link:hover {
+            transform: scale(1.15);
+            background-color: #e2e8f0;
+        }
+
+        /* 💡 マルチリンク（X-HALL等）専用の洗練されたポップアップスタイル */
+        .multi-link-container {
+            position: absolute;
+            display: none;
+            background-color: rgba(255, 255, 255, 0.98);
+            padding: 12px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0,0,0,0.08);
+            z-index: 1000;
+            width: 220px;
+            transform: translate(-50%, -100%);
+            margin-top: -10px;
+            font-family: sans-serif;
+        }
+        .multi-link-title {
+            font-size: 15px;
+            font-weight: bold;
+            color: #1e293b;
+            margin-bottom: 8px;
+            border-bottom: 2px solid #ff4757;
+            padding-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .multi-link-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            max-height: 220px;
+            overflow-y: auto;
+        }
+        .multi-link-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: #334155;
+            font-size: 12px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            background: #f8fafc;
+            transition: background 0.2s, color 0.2s, transform 0.1s;
+        }
+        .multi-link-item:hover {
+            background: #ff4757;
+            color: #fff;
+            transform: translateX(3px);
+        }
+        .multi-link-icon {
+            font-size: 13px;
+            width: 16px;
+            text-align: center;
+        }
+
+        .selector-wrapper {
+            position: relative;
+            display: inline-block;
+            margin-right: 5px;
+        }
+
+        .custom-select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-color: #ffffff;
+            color: #334155;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 36px 8px 12px;
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            outline: none;
+        }
+
+        .custom-select:hover {
+            background-color: #f8fafc;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .select-arrow {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 11px;
+            color: #64748b;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <div style="display: flex; flex-direction: column; position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px;">
+        <div id="header" style="height: 60px; display: flex; background-color: #60A060; align-items: center; justify-content: space-between; padding: 0 15px;">
+            <div id="title" style="font-size: 24px; color: #ffffff;">大須商店街食べ歩きマップ</div>
+    
+        <div class="selector-wrapper">
+            <select id="sceneSelector" class="custom-select">
+                <option value="scene1">万松寺通</option>
+                <option value="scene32">門前町通</option>
+                <option value="scene38">東仁王門通</option>
+                <option value="scene65">新天地通</option>
+                <option value="scene88">赤門通</option>
+                <option value="scene121">大須本通   </option>
+            </select>
+            <i class="fa-solid fa-chevron-down select-arrow"></i>
+        </div>
+    </div>
+    <div style="flex: 1; " id="panorama"></div>
+    </div>   
+<script>
+var viewer = pannellum.viewer('panorama', {
+    "default": {
+        "firstScene": "scene1", 
+        "sceneFadeDuration": 1000
+    },
+    //万松寺通
+    "scenes": {
+        "scene1": {
+            "autoLoad": true,
+            "compass": true,
+            "title": "撮影場所 1",
+            "hfov": 110,
+            "pitch": -3,
+            "type": "equirectangular",
+            "panorama": "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010283.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -9.79894654875619,
+                    "yaw": -2.3894786844160953,
+                    "type": "scene",
+                    "text": "撮影場所 2に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene2"
+                }
+            ]
+        },
+
+        "scene2": {
+            "compass": true,
+            "title": "撮影場所 2",
+            "hfov": 110,
+            "type": "equirectangular",
+            "panorama": "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010284.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -9.637517662186179,
+                    "yaw": 1.4133841130281706,
+                    "type": "scene",
+                    "text": "撮影場所 3に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene3"
+                },
+                {
+                    "pitch": -15.051278985933035,
+                    "yaw": -177.8691305683765,
+                    "type": "scene",
+                    "text": "撮影場所 1に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene1"
+                },
+            ]
+        },
+
+        "scene3": {
+            "compass": true,
+            "title": "撮影場所 3",
+            "hfov": 110,
+            "type": "equirectangular",
+            "panorama": "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010285.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -7.265437242371511,
+                    "yaw": 4.752082185750538,
+                    "type": "scene",
+                    "text": "撮影場所 4に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene4"
+                },
+                {
+                    "pitch": -13.39366231117297,
+                    "yaw": -172.92388221673156,
+                    "type": "scene",
+                    "text": "撮影場所 2に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene2"
+                }
+            ]
+        },
+
+        "scene4": {
+            "compass": true,
+            "title": "撮影場所 4",
+            "hfov": 110,
+            "type": "equirectangular",
+            "panorama": "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010286.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.454808986859199,
+                    "yaw": 7.671529563206466,
+                    "type": "scene",
+                    "text": "撮影場所 5に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene5"
+                },
+                {
+                    "pitch": -13.726585712415515,
+                    "yaw": -170.28478838589373,
+                    "type": "scene",
+                    "text": "撮影場所 3に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene3"
+                }
+            ]
+        },
+
+        "scene5": {
+            "compass": true,
+            "title": "撮影場所 5",
+            "hfov": 110,
+            "type": "equirectangular",
+            "panorama": "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010287.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.945695347409366,
+                    "yaw": 9.225619702750329,
+                    "type": "scene",
+                    "text": "撮影場所 6に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene6"
+                },
+                {
+                    "pitch": -14.785410069267764,
+                    "yaw": -169.27582003288413,
+                    "type": "scene",
+                    "text": "撮影場所 4に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene4"
+                },
+            ]
+        },
+
+        "scene6": {
+            "compass": true,
+            "title": "撮影場所 6",
+            "hfov": 110,
+            "type": "equirectangular",
+            "panorama": "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010288.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -11.625481629903517,
+                    "yaw": 8.568701397507793,
+                    "type": "scene",
+                    "text": "撮影場所 7に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene7"
+                },
+                {
+                    "pitch": -13.02844017384818,
+                    "yaw": -170.8420862128508,
+                    "type": "scene",
+                    "text": "撮影場所 5に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene5"
+                }
+            ]
+        },
+        "scene7":{
+            "compass": true,
+            "title": "撮影場所 7",
+            "hfov": 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010289.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.438115611312181,
+                    "yaw": 16.838474572900985,
+                    "type": "scene",
+                    "text": "撮影場所 8に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene8"
+                },
+                {
+                    "pitch": -13.328265349918114,
+                    "yaw": -163.84271182776624,
+                    "type": "scene",
+                    "text": "撮影場所 6に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene6"
+                },
+                {
+                    "pitch": -14.532220314058547,
+                    "yaw": -60.50095187183614,
+                    "type": "scene",
+                    "text": "撮影場所 70に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene70"
+                },
+                {
+                    "pitch": -14.888448600799492,
+                    "yaw": 102.54453312828416,
+                    "type": "scene",
+                    "text": "撮影場所 71に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene71"
+                }
+            ]
+        },
+        "scene8":{
+            "compass" : true,
+            "title": "撮影場所 8",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010290.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.05792036243142,
+                    "yaw": 12.085231407520624,
+                    "type": "scene",
+                    "text": "撮影場所 9に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene9"
+                },
+                {
+                    "pitch": -14.908205688184548,
+                    "yaw": -167.14724386936345,
+                    "type": "scene",
+                    "text": "撮影場所 7に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene7"
+                }
+            ]
+        },
+        "scene9":{
+            "compass" : true,
+            "title": "撮影場所 9",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010291.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.38538452310302,
+                    "yaw": 11.590376005187082,
+                    "type": "scene",
+                    "text": "撮影場所 10に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene10"
+                },
+                {
+                    "pitch": -12.579162980368022,
+                    "yaw": -166.46264713639664,
+                    "type": "scene",
+                    "text": "撮影場所 8に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene8"
+                },
+                {
+                    "pitch": 10.085409284059354,
+                    "yaw": -24.503713682110615,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip, 
+                    "createTooltipArgs": {
+                    "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/MeetFresh.jpg",
+                    "title": "MeetFresh鮮芋仙 名古屋大須店",
+                    "text": "台湾生まれの世界中で親しまれた伝統スイーツ店。お芋を使ったモチモチ食感のタロイモボールが人気です。",
+                    "hours": "10:00～20:00", 
+                    "holiday": "なし",       
+                    "links": [
+                        { "type": "instagram", "url": "https://www.instagram.com/meetfreshjapan/" },
+                        { "type": "website", "url": "https://www.meetfresh-tokyo.jp/" },
+                        { "type": "menu", "url": "https://www.meetfresh-tokyo.jp/menu/" } 
+                        ]
+                    }            
+                }   
+            ]
+        },
+        "scene10":{
+            "compass" : true,
+            "title": "撮影場所 10",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010292.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.094780549512304,
+                    "yaw": 7.768052830188205,
+                    "type": "scene",
+                    "text": "撮影場所 11に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene11"
+                },
+                {
+                    "pitch": -15.050739360989294,
+                    "yaw": -174.1176347140106,
+                    "type": "scene",
+                    "text": "撮影場所 9に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene9"
+                },
+                {
+                    "pitch": 7.672478908667632,
+                    "yaw": -149.1522397602012,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip, 
+                    "createTooltipArgs": {
+                    "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/MeetFresh.jpg",
+                    "title": "MeetFresh鮮芋仙 名古屋大須店",
+                    "text": "台湾生まれの世界中で親しまれた伝統スイーツ店。お芋を使ったモチモチ食感のタロイモボールが人気です。",
+                    "hours": "10:00～20:00", 
+                    "holiday": "なし",       
+                    "links": [
+                        { "type": "instagram", "url": "https://www.instagram.com/meetfreshjapan/" },
+                        { "type": "website", "url": "https://www.meetfresh-tokyo.jp/" },
+                        { "type": "menu", "url": "https://www.meetfresh-tokyo.jp/menu/" } 
+                        ]
+                    }            
+                }
+            ]
+        },
+        "scene11":{
+            "compass" : true,
+            "title": "撮影場所 11",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010293.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.049033341442655,
+                    "yaw": 11.744596809864753,
+                    "type": "scene",
+                    "text": "撮影場所 12に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene12"
+                },
+                {
+                    "pitch": -15.988371861976418,
+                    "yaw": -168.44742007434635,
+                    "type": "scene",
+                    "text": "撮影場所 10に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene10"
+                }
+            ]
+        },
+        "scene12":{
+            "compass" : true,
+            "title": "撮影場所 12",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010294.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.279721830280362,
+                    "yaw": 15.760266438058384,
+                    "type": "scene",
+                    "text": "撮影場所 13に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene13"
+                },
+                {
+                    "pitch": -17.313576210185012,
+                    "yaw": -165.39714187554085,
+                    "type": "scene",
+                    "text": "撮影場所 11に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene11"
+                }
+            ]
+        },
+        "scene13":{
+            "compass" : true,
+            "title": "撮影場所 13",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010295.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.428598518030809,
+                    "yaw": 24.706503404964494,
+                    "type": "scene",
+                    "text": "撮影場所 14に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene14"
+                },
+                {
+                    "pitch": -19.284987633783935,
+                    "yaw": -160.70224850140752,
+                    "type": "scene",
+                    "text": "撮影場所 12に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene12"
+                }
+            ]
+        },
+        "scene14":{
+            "compass" : true,
+            "title": "撮影場所 14",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010296.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.308985410205652,
+                    "yaw": 14.500504270201006,
+                    "type": "scene",
+                    "text": "撮影場所 15に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene15"
+                },
+                {
+                    "pitch": -12.705194851929054,
+                    "yaw": -170.86667386278776,
+                    "type": "scene",
+                    "text": "撮影場所 13に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene13"
+                }
+            ]
+        },
+        "scene15":{
+            "compass" : true,
+            "title": "撮影場所 15",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010297.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.391341112482595,
+                    "yaw": 20.037263358655256,
+                    "type": "scene",
+                    "text": "撮影場所 16に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene16"
+                },
+                {
+                    "pitch": -20.24576361845072,
+                    "yaw": -159.06082569985813,
+                    "type": "scene",
+                    "text": "撮影場所 14に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene14"
+                },
+                {
+                    "pitch":  13.380615758568167,
+                    "yaw": 48.7433074578168,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/shinzigi.jfif",
+                        "title":"シンジキ万松寺店",
+                        "text": "本場台湾から上陸した本格タピオカ専門店。じっくり煮込んだ大粒のもちもち黒糖タピオカミルクティー（580円〜）や、爽やかな新食感のフルーツティーなど種類豊富なドリンクが楽しめる。",
+                        "hours":"10:00~20:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/xinshiqi_tapioca/"},
+                            {"type":"menu","url":"https://tabelog.com/aichi/A2301/A230105/23071977/dtlmenu/photo/#"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene16":{
+            "compass" : true,
+            "title": "撮影場所 16",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010298.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.909982366598472,
+                    "yaw": 22.266294061874362,
+                    "type": "scene",
+                    "text": "撮影場所 17に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene17"
+                },
+                {
+                    "pitch": -14.940632702752037,
+                    "yaw": -158.9919889850162,
+                    "type": "scene",
+                    "text": "撮影場所 15に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene15"
+                },
+                {
+                    "pitch": 14.697311224094143,
+                    "yaw": 164.99655354757658,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/shinzigi.jfif",
+                        "title":"シンジキ万松寺店",
+                        "text": "本場台湾から上陸した本格タピオカ専門店。じっくり煮込んだ大粒のもちもち黒糖タピオカミルクティー（580円〜）や、爽やかな新食感のフルーツティーなど種類豊富なドリンクが楽しめる。",
+                        "hours":"10:00~20:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/xinshiqi_tapioca/"},
+                            {"type":"menu","url":"https://tabelog.com/aichi/A2301/A230105/23071977/dtlmenu/photo/#"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene17":{
+            "compass" : true,
+            "title": "撮影場所 17",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010299.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.445611774486474,
+                    "yaw": 13.895330273069849,
+                    "type": "scene",
+                    "text": "撮影場所 18に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene18"
+                },
+                {
+                    "pitch": -10.431164127344115,
+                    "yaw": -169.7594106649221,
+                    "type": "scene",
+                    "text": "撮影場所 16に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene16"
+                }
+            ]
+        },
+        "scene18":{
+            "compass" : true,
+            "title": "撮影場所 18",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010300.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.795456133536833,
+                    "yaw": 17.527384618975557,
+                    "type": "scene",
+                    "text": "撮影場所 19に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene19"
+                },
+                {
+                    "pitch": -16.755534935639073,
+                    "yaw": -167.0168801245821,
+                    "type": "scene",
+                    "text": "撮影場所 17に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene17"
+                },
+                {
+                    "pitch":  11.23036821607755,
+                    "yaw": 42.695216855118204,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/wafflekhan.jfif",
+                        "title":"WaffleKhan名古屋大須店",
+                        "text": "健康志向スイーツを目指すワッフルカーンは、5種類の穀物を使ったワッフル生地と、カロリーオフの生クリームを使用し、韓国直輸入の食材で本場の味を楽しめる。",
+                        "hours":"11:00~19:00",
+                        "holiday":"無休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/wafflekhan.japan/"},
+                            {"type":"menu","url":"http://wafflekhan.co.jp/menu/waffle/"},
+                            {"type":"website","url":"http://wafflekhan.co.jp/"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene19":{
+            "compass" : true,
+            "title": "撮影場所 19",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010301.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -10.7274785925514,
+                    "yaw": 17.310009491264623,
+                    "type": "scene",
+                    "text": "撮影場所 20に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene20"
+                },
+                {
+                    "pitch": -17.339189312937403,
+                    "yaw": -164.97181586555516,
+                    "type": "scene",
+                    "text": "撮影場所 18に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene18"
+                }
+            ]
+        },
+        "scene20":{
+            "compass" : true,
+            "title": "撮影場所 20",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010302.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -11.970983430715286,
+                    "yaw": 7.216330185099663,
+                    "type": "scene",
+                    "text": "撮影場所 21に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene21"
+                },
+                {
+                    "pitch": -16.712248684947653,
+                    "yaw": -175.2996332341085,
+                    "type": "scene",
+                    "text": "撮影場所 19に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene19"
+                }
+            ]
+        },
+        "scene21":{
+            "compass" : true,
+            "title": "撮影場所 21",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010303.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.263423002398989,
+                    "yaw": 27.652440175379088,
+                    "type": "scene",
+                    "text": "撮影場所 22に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene22"
+                },
+                {
+                    "pitch": -17.79113093110158,
+                    "yaw": -153.22802603705705,
+                    "type": "scene",
+                    "text": "撮影場所 20に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene20"
+                }
+            ]
+        },
+        "scene22":{
+            "compass" : true,
+            "title": "撮影場所 22",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010304.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.219604695184275,
+                    "yaw": 17.776500769677348,
+                    "type": "scene",
+                    "text": "撮影場所 23に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene23"
+                },
+                {
+                    "pitch": -18.0499956081917,
+                    "yaw": -156.9862949276809,
+                    "type": "scene",
+                    "text": "撮影場所 21に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene21"
+                },
+                {
+                    "pitch":  2.9245016211631185,
+                    "yaw": -111.03088156107167,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/tyuro.jpg",
+                        "title":"ちゅろ。✕美炉",
+                        "text": "チュロスと肉寿司の専門店。<br>一番人気メニューは「nameちゅろす」。名前や好きな文字の形にオーダーできる、カスタマイズチュロス。",
+                        "hours":"11:00~19:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/churo_churo_/"},
+                            {"type":"menu","url":"https://maps.app.goo.gl/oqd9fGGwsGwtjmjP6"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene23":{
+            "compass" : true,
+            "title": "撮影場所 23",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010305.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.322436065026583,
+                    "yaw": 10.948660809450706,
+                    "type": "scene",
+                    "text": "撮影場所 24に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene24"
+                },
+                {
+                    "pitch": -17.703919796875674,
+                    "yaw": -168.72609059318597,
+                    "type": "scene",
+                    "text": "撮影場所 22に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene22"
+                },
+                {
+                    "pitch":  0.5450551675103558,
+                    "yaw": 67.27576187429744,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/FruitsCandyar.jpg",
+                        "title":"Fruits Candy ar.",
+                        "text": "りんご飴専門店。その時期にもっともおいしい林檎を全国から厳選し、こだわりのりんご飴を提供している。",
+                        "hours":"11:00~19:00(完売次第終了)",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/ar.official_ig/"},
+                            {"type":"website","url":"https://ar-ringo.com/#store"},
+                            {"type":"menu","url":"https://ar-ringo.com/#store"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene24":{
+            "compass" : true,
+            "title": "撮影場所 24",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010306.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.240359084999072,
+                    "yaw": 13.89263404496909,
+                    "type": "scene",
+                    "text": "撮影場所 25に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene25"
+                },
+                {
+                    "pitch": -15.618659998415914,
+                    "yaw": -166.4903936840867,
+                    "type": "scene",
+                    "text": "撮影場所 23に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene23"
+                },
+                {
+                    "pitch":  5.715923202479565,
+                    "yaw": -33.44066965199582,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/imomi.jfif",
+                        "title":"さつまいもスイーツ専門店「imomi」",
+                        "text": "店内には様々な芋のスイーツが並び、焼き芋の量り売りも行っている。",
+                        "hours":"11:00~18:00",
+                        "holiday":"火曜日",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/imomi_official/"},
+                            {"type":"website","url":"https://tourist-labo.jp/imomi/"},
+                            {"type":"menu","url":"https://tourist-labo.jp/imomi/item/index.html"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene25":{
+            "compass" : true,
+            "title": "撮影場所 25",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010307.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.909982366598472,
+                    "yaw": 22.266294061874362,
+                    "type": "scene",
+                    "text": "撮影場所 26に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene26"
+                },
+                {
+                    "pitch": -15.58481534567276,
+                    "yaw": -159.08907309706066,
+                    "type": "scene",
+                    "text": "撮影場所 24に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene24"
+                }
+            ]
+        },
+        "scene26":{
+            "compass" : true,
+            "title": "撮影場所 26",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010308.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -10.518232585043695,
+                    "yaw": 19.87312559647522,
+                    "type": "scene",
+                    "text": "撮影場所 27に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene27"
+                },
+                {
+                    "pitch": -15.056898105809037,
+                    "yaw": -162.63925818754902,
+                    "type": "scene",
+                    "text": "撮影場所 25に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene25"
+                }
+            ]
+        },
+        "scene27":{
+            "compass" : true,
+            "title": "撮影場所 27",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010309.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.859532962471729,
+                    "yaw": 27.123006176105086,
+                    "type": "scene",
+                    "text": "撮影場所 28に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene28"
+                },
+                {
+                    "pitch": -18.153162314340108,
+                    "yaw": -156.16208665923835,
+                    "type": "scene",
+                    "text": "撮影場所 26に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene26"
+                }
+            ]
+        },
+        "scene28":{
+            "compass" : true,
+            "title": "撮影場所 28",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010310.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -11.936501003880366,
+                    "yaw": 30.221160947008617,
+                    "type": "scene",
+                    "text": "撮影場所 29に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene29"
+                },
+                {
+                    "pitch": -16.635773251383572,
+                    "yaw": -158.72547354696204,
+                    "type": "scene",
+                    "text": "撮影場所 27に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene27"
+                }
+            ]
+        },
+        "scene29":{
+            "compass" : true,
+            "title": "撮影場所 29",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010311.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.674309549505663,
+                    "yaw": 28.35829674120863,
+                    "type": "scene",
+                    "text": "撮影場所 30に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene30"
+                },
+                {
+                    "pitch": -14.636013221218768,
+                    "yaw": -155.70983654102147,
+                    "type": "scene",
+                    "text": "撮影場所 28に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene28"
+                }
+            ]
+        },
+        "scene30":{
+            "compass" : true,
+            "title": "撮影場所 30",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010312.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.6030779401476,
+                    "yaw": 22.212183946162988,
+                    "type": "scene",
+                    "text": "撮影場所 31に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene31"
+                },
+                {
+                    "pitch": -15.403422943629183,
+                    "yaw": -164.06535558828568,
+                    "type": "scene",
+                    "text": "撮影場所 29に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene29"
+                }
+            ]
+        },
+        "scene31":{
+            "compass" : true,
+            "title": "撮影場所 31",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010313.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.801189442451065,
+                    "yaw": -59.2584022948636,
+                    "type": "scene",
+                    "text": "撮影場所 32に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene32"
+                },
+                {
+                    "pitch": -16.740946181902597,
+                    "yaw": -166.07632485632024,
+                    "type": "scene",
+                    "text": "撮影場所 30に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene30"
+                },
+                {
+                    "pitch": -15.866543482827138,
+                    "yaw": 100.50866837469532,
+                    "type": "scene",
+                    "text": "撮影場所 134に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene134"
+                }
+            ]
+        },
+        //ここから門前町通
+        "scene32":{
+            "compass" : true,
+            "title": "撮影場所 32",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010315.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.70272363853331,
+                    "yaw": 17.487545379387228,
+                    "type": "scene",
+                    "text": "撮影場所 33に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene33"
+                },
+                {
+                    "pitch": -16.740946181902597,
+                    "yaw": -166.07632485632024,
+                    "type": "scene",
+                    "text": "撮影場所 31に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene31"
+                }
+            ]
+        },
+        "scene33":{
+            "compass" : true,
+            "title": "撮影場所 33",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010316.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.70272363853331,
+                    "yaw": 17.487545379387228,
+                    "type": "scene",
+                    "text": "撮影場所 34に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene34"
+                },
+                {
+                    "pitch": -17.723982306048253,
+                    "yaw": -159.37374650327104,
+                    "type": "scene",
+                    "text": "撮影場所 32に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene32"
+                }
+            ]
+        },
+        "scene34":{
+            "compass" : true,
+            "title": "撮影場所 34",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010317.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.35307190932422,
+                    "yaw": 22.030201700398962,
+                    "type": "scene",
+                    "text": "撮影場所 35に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene35"
+                },
+                {
+                    "pitch": -16.982495127155538,
+                    "yaw": -158.65777665205965,
+                    "type": "scene",
+                    "text": "撮影場所 33に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene33"
+                }
+            ]
+        },
+        "scene35":{
+            "compass" : true,
+            "title": "撮影場所 35",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010318.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.957766078400265,
+                    "yaw": 29.41178173437106,
+                    "type": "scene",
+                    "text": "撮影場所 36に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene36"
+                },
+                {
+                    "pitch": -17.345026909839405,
+                    "yaw": -150.66645798085855,
+                    "type": "scene",
+                    "text": "撮影場所 34に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene34"
+                },
+                {
+                    "pitch":  1.5021268194526116,
+                    "yaw": 105.6321350893185,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/iryansentyen.jpg",
+                        "title":"一両生煎",
+                        "text": "上海名物の“生煎（焼き小籠包）”を味わえる人気店。<br>箸で皮に穴を開け、あふれ出すスープをすすってからかぶりつくのがおすすめ。",
+                        "hours":"11:00~22:00(LOは21:30)",
+                        "holiday":"不定休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/iryansenchen/"},
+                            {"type":"menu","url":"https://www.hotpepper.jp/strJ003894041/food/"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene36":{
+            "compass" : true,
+            "title": "撮影場所 36",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010319.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.4390917231899,
+                    "yaw": 28.697240917525573,
+                    "type": "scene",
+                    "text": "撮影場所 37に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene37"
+                },
+                {
+                    "pitch": -17.12967724302157,
+                    "yaw": -151.23634429844438,
+                    "type": "scene",
+                    "text": "撮影場所 35に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene35"
+                },
+                {
+                    "pitch":  23.925517361824244,
+                    "yaw": -66.8633054815197,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/TOP'SPOPCORN.jpg",
+                        "title":"TOP'SPOPCORN名古屋大須店",
+                        "text": "ポップコーン専門店ならではのフレーバーがたくさん！定番のキャラメルからちょっと変わったフルーツ系まで！",
+                        "hours":"11:00~18:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/tops.popcorn/"},
+                            {"type":"website","url":"https://tops-popcorn.com/"},
+                            {"type":"menu","url":"https://tabelog.com/aichi/A2301/A230105/23054574/dtlmenu/photo/"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene37":{
+            "compass" : true,
+            "title": "撮影場所 37",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010320.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.280276199840026,
+                    "yaw": -67.05857979982937,
+                    "type": "scene",
+                    "text": "撮影場所 38に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene38"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 36に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene36"
+                }
+            ]
+        },
+        //ここから東仁王門通
+        "scene38":{
+            "compass" : true,
+            "title": "撮影場所 38",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010321.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.35533969911697,
+                    "yaw": 27.74867605095415,
+                    "type": "scene",
+                    "text": "撮影場所 39に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene39"
+                },
+                {
+                    "pitch": -21.644273568093634,
+                    "yaw": -156.97709285169037,
+                    "type": "scene",
+                    "text": "撮影場所 37に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene37"
+                },
+                {
+                    "pitch":  15.584867502763942,
+                    "yaw": -46.08341884620698,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/TOP'SPOPCORN.jpg",
+                        "title":"TOP'SPOPCORN名古屋大須店",
+                        "text": "ポップコーン専門店ならではのフレーバーがたくさん！定番のキャラメルからちょっと変わったフルーツ系まで！<br>営業時間：11:00~18:00<br>定休日：なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/tops.popcorn/"},
+                            {"type":"website","url":"https://tops-popcorn.com/"},
+                            {"type":"menu","url":"https://tabelog.com/aichi/A2301/A230105/23054574/dtlmenu/photo/"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene39":{
+            "compass" : true,
+            "title": "撮影場所 39",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010322.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.105660144763386,
+                    "yaw": 19.05805394914186,
+                    "type": "scene",
+                    "text": "撮影場所 40に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene40"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 38に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene38"
+                }
+            ]
+        },
+        "scene40":{
+            "compass" : true,
+            "title": "撮影場所 40",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010323.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.722253172682006,
+                    "yaw": 23.83217624584468,
+                    "type": "scene",
+                    "text": "撮影場所 41に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene41"
+                },
+                {
+                    "pitch": -20.377550714543226,
+                    "yaw": -155.07597661619988,
+                    "type": "scene",
+                    "text": "撮影場所 39に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene39"
+                }
+            ]
+        },
+        "scene41":{
+            "compass" : true,
+            "title": "撮影場所 41",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010324.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.604547874700902,
+                    "yaw": 25.570556447240545,
+                    "type": "scene",
+                    "text": "撮影場所 42に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene42"
+                },
+                {
+                    "pitch": -18.243238469693143,
+                    "yaw": -155.47122235336886,
+                    "type": "scene",
+                    "text": "撮影場所 40に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene40"
+                }
+            ]
+        },
+        "scene42":{
+            "compass" : true,
+            "title": "撮影場所 42",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010325.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.985470167926316,
+                    "yaw": 25.949472816978634,
+                    "type": "scene",
+                    "text": "撮影場所 43に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene43"
+                },
+                {
+                    "pitch": -18.647776309110803,
+                    "yaw": -154.4210603857033,
+                    "type": "scene",
+                    "text": "撮影場所 41に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene41"
+                }
+            ]
+        },
+        "scene43":{
+            "compass" : true,
+            "title": "撮影場所 43",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010326.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.265669560901674,
+                    "yaw": 23.856896974503094,
+                    "type": "scene",
+                    "text": "撮影場所 44に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene44"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 42に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene42"
+                }
+            ]
+        },
+        "scene44":{
+            "compass" : true,
+            "title": "撮影場所 44",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010327.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.487639408315363,
+                    "yaw": 26.054897131506888,
+                    "type": "scene",
+                    "text": "撮影場所 45に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene45"
+                },
+                {
+                    "pitch": -24.261947964375935,
+                    "yaw": -158.23160004596522,
+                    "type": "scene",
+                    "text": "撮影場所 43に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene43"
+                }
+            ]
+        },
+        "scene45":{
+            "compass" : true,
+            "title": "撮影場所 45",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010328.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.613296503130865,
+                    "yaw": 29.87082026214337,
+                    "type": "scene",
+                    "text": "撮影場所 46に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene46"
+                },
+                {
+                    "pitch": -21.36650046217901,
+                    "yaw": -151.46376265309013,
+                    "type": "scene",
+                    "text": "撮影場所 44に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene44"
+                }
+            ]
+        },
+        "scene46":{
+            "compass" : true,
+            "title": "撮影場所 46",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010329.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.881445477263977,
+                    "yaw": 25.359770941949638,
+                    "type": "scene",
+                    "text": "撮影場所 47に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene47"
+                },
+                {
+                    "pitch": -22.14778254765257,
+                    "yaw": -154.72613250605164,
+                    "type": "scene",
+                    "text": "撮影場所 45に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene45"
+                }
+            ]
+        },
+        "scene47":{
+            "compass" : true,
+            "title": "撮影場所 47",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010330.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.314610596377532,
+                    "yaw": 33.26304230805967,
+                    "type": "scene",
+                    "text": "撮影場所 48に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene48"
+                },
+                {
+                    "pitch": -24.2793046894492,
+                    "yaw": -146.16404090226214,
+                    "type": "scene",
+                    "text": "撮影場所 46に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene46"
+                }
+            ]
+        },
+        "scene48":{
+            "compass" : true,
+            "title": "撮影場所 48",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010331.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.920390351222316,
+                    "yaw": 17.42756811785175,
+                    "type": "scene",
+                    "text": "撮影場所 49に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene49"
+                },
+                {
+                    "pitch": -22.41427836475212,
+                    "yaw": -161.65758609294164,
+                    "type": "scene",
+                    "text": "撮影場所 47に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene47"
+                },
+                {
+                    "pitch":  13.593005522540588,
+                    "yaw": 87.24446102872456,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/vetnamkichen.jpg",
+                        "title":"ベトナムキッチン",
+                        "text": "ライスヌードル「フォー」とフランスパンサンドイッチ「バンミー」にこだわった専門店。",
+                        "hours":"平日：11:00~19:00  土：11:00~21:00  日・祝日：10:00~19:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/bep_viet3617/"},
+                            {"type":"website","url":"https://venitam.com/kitchen.html"},
+                            {"type":"menu","url":"https://hitosara.com/0006095332/food.html"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene49":{
+            "compass" : true,
+            "title": "撮影場所 49",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010332.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -21.63819096421839,
+                    "yaw": 29.91095457559057,
+                    "type": "scene",
+                    "text": "撮影場所 50に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene50"
+                },
+                {
+                    "pitch": -24.59070985268985,
+                    "yaw": -149.73412543128947,
+                    "type": "scene",
+                    "text": "撮影場所 48に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene48"
+                }
+            ]
+        },
+        "scene50":{
+            "compass" : true,
+            "title": "撮影場所 50",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010333.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -21.828498150220504,
+                    "yaw": 32.69439441245182,
+                    "type": "scene",
+                    "text": "撮影場所 51に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene51"
+                },
+                {
+                    "pitch": -19.82694520441965,
+                    "yaw": -149.52830408787,
+                    "type": "scene",
+                    "text": "撮影場所 49に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene49"
+                }
+            ]
+        },
+        "scene51":{
+            "compass" : true,
+            "title": "撮影場所 51",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010334.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -20.36710559909472,
+                    "yaw": 24.795641686068272,
+                    "type": "scene",
+                    "text": "撮影場所 52に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene52"
+                },
+                {
+                    "pitch": -16.67897880858771,
+                    "yaw": -153.34366356169448,
+                    "type": "scene",
+                    "text": "撮影場所 50に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene50"
+                }
+            ]
+        },
+        "scene52":{
+            "compass" : true,
+            "title": "撮影場所 52",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010335.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.56615360297122,
+                    "yaw": 25.440206356572265,
+                    "type": "scene",
+                    "text": "撮影場所 53に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene53"
+                },
+                {
+                    "pitch": -17.767212839248273,
+                    "yaw": -156.09066437126708,
+                    "type": "scene",
+                    "text": "撮影場所 51に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene51"
+                }
+            ]
+        },
+        "scene53":{
+            "compass" : true,
+            "title": "撮影場所 53",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010336.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.046120467298145,
+                    "yaw": 14.2974411134613,
+                    "type": "scene",
+                    "text": "撮影場所 54に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene54"
+                },
+                {
+                    "pitch": -17.089735291809298,
+                    "yaw": -168.48347550668723,
+                    "type": "scene",
+                    "text": "撮影場所 52に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene52"
+                }
+            ]
+        },
+        "scene54":{
+            "compass" : true,
+            "title": "撮影場所 54",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010337.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -23.531508260978647,
+                    "yaw": 24.174652156456137,
+                    "type": "scene",
+                    "text": "撮影場所 55に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene55"
+                },
+                {
+                    "pitch": -21.87388607121914,
+                    "yaw": -159.96316117068673,
+                    "type": "scene",
+                    "text": "撮影場所 53に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene53"
+                }
+            ]
+        },
+        "scene55":{
+            "compass" : true,
+            "title": "撮影場所 55",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010338.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.216244152052962,
+                    "yaw": 35.45962740054077,
+                    "type": "scene",
+                    "text": "撮影場所 56に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene56"
+                },
+                {
+                    "pitch": -20.614687529751325,
+                    "yaw": -150.85078223658803,
+                    "type": "scene",
+                    "text": "撮影場所 54に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene54"
+                },
+                {
+                    "pitch":  4.810082219925239,
+                    "yaw": -11.533470534661038,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/taiwanyatai.jfif",
+                        "title":"李さんの台湾名物屋台",
+                        "text": "ピリ辛サクサク元祖「台湾唐揚げ」と大粒モチモチ「タピオカドリンク」のお店。",
+                        "hours":"平日：12:00~20:00(祝日・休日は11:30~)",
+                        "holiday":"水曜日",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/leestaiwankitchen/"},
+                            {"type":"website","url":"https://shop.lees-taiwan-kitchen.com/"},
+                            {"type":"menu","url":"https://shop.lees-taiwan-kitchen.com/p/00002"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene56":{
+            "compass" : true,
+            "title": "撮影場所 56",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010339.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.9462689601066,
+                    "yaw": 23.27761190470226,
+                    "type": "scene",
+                    "text": "撮影場所 57に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene57"
+                },
+                {
+                    "pitch": -17.661860689125078,
+                    "yaw": -165.3257088982431,
+                    "type": "scene",
+                    "text": "撮影場所 55に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene55"
+                },
+                {
+                    "pitch":  6.269014062064704,
+                    "yaw": -19.198514217771116,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/lees-taiwan-donut007.webp",
+                        "title":"李さんの台湾パリパリドーナツ",
+                        "text": "台湾やタイの定番スイーツで、生地だけでなく衣の香ばしさも楽しめるのが特徴。",
+                        "hours":"11:00~19:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/leestaiwankitchen/"},
+                            {"type":"menu","url":"https://oinagoya.com/wp-content/uploads/2026/03/HELHHDcbUAAcI86.jpg"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene57":{
+            "compass" : true,
+            "title": "撮影場所 57",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010340.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -20.414640476838336,
+                    "yaw": 22.14651818220911,
+                    "type": "scene",
+                    "text": "撮影場所 58に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene58"
+                },
+                {
+                    "pitch": -17.20463508421488,
+                    "yaw": -157.2908351997674,
+                    "type": "scene",
+                    "text": "撮影場所 56に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene56"
+                }
+            ]
+        },
+        "scene58":{
+            "compass" : true,
+            "title": "撮影場所 58",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010341.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.732267683895227,
+                    "yaw": 21.519834990120348,
+                    "type": "scene",
+                    "text": "撮影場所 59に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene59"
+                },
+                {
+                    "pitch": -21.374266643365857,
+                    "yaw": -161.15307407891333,
+                    "type": "scene",
+                    "text": "撮影場所 57に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene57"
+                }
+            ]
+        },
+        "scene59":{
+            "compass" : true,
+            "title": "撮影場所 59",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010342.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.46632433443288,
+                    "yaw": 31.083082165828937,
+                    "type": "scene",
+                    "text": "撮影場所 60に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene60"
+                },
+                {
+                    "pitch": -20.171611922859793,
+                    "yaw": -151.60546399531427,
+                    "type": "scene",
+                    "text": "撮影場所 58に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene58"
+                }
+            ]
+        },
+        "scene60":{
+            "compass" : true,
+            "title": "撮影場所 60",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010343.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.121014235475638,
+                    "yaw": 14.347490917342366,
+                    "type": "scene",
+                    "text": "撮影場所 61に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene61"
+                },
+                {
+                    "pitch": -16.741617923594934,
+                    "yaw": -167.23187400439485,
+                    "type": "scene",
+                    "text": "撮影場所 59に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene59"
+                }
+            ]
+        },
+        "scene61":{
+            "compass" : true,
+            "title": "撮影場所 61",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010344.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.22126295593953,
+                    "yaw": 29.33819618185393,
+                    "type": "scene",
+                    "text": "撮影場所 62に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene62"
+                },
+                {
+                    "pitch": -18.59654507644544,
+                    "yaw": -150.44035206544973,
+                    "type": "scene",
+                    "text": "撮影場所 60に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene60"
+                },
+                {
+                    "pitch":  7.167692316208855,
+                    "yaw": 70.24946624514754,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/natutotaiyaki.webp",
+                        "title":"鳴門鯛焼本舗",
+                        "text": "天然たい焼きと呼ばれる、一匹ずつ丁寧に焼き上げる製法が特徴。これにより、外はパリッと、中はふんわりとした食感が楽しめる。",
+                        "hours":"10:00~22:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"website","url":"https://www.taiyaki.co.jp/"},
+                            {"type":"menu","url":"https://www.taiyaki.co.jp/menu.html"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene62":{
+            "compass" : true,
+            "title": "撮影場所 62",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010345.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.517382987213153,
+                    "yaw": 20.347956971573673,
+                    "type": "scene",
+                    "text": "撮影場所 63に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene63"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 61に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene61"
+                },
+                {
+                    "pitch":  8.26450755368169,
+                    "yaw": 149.66556415881652,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://i0.wp.com/jouhou.nagoya/wp-content/uploads/2018/08/51219c1021056e31d7986c9da345e442.jpg",
+                        "title":"鳴門鯛焼本舗",
+                        "text": "天然たい焼きと呼ばれる、一匹ずつ丁寧に焼き上げる製法が特徴。これにより、外はパリッと、中はふんわりとした食感が楽しめる。",
+                        "hours":"10:00~22:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"website","url":"https://www.taiyaki.co.jp/"},
+                            {"type":"menu","url":"https://www.taiyaki.co.jp/menu.html"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene63":{
+            "compass" : true,
+            "title": "撮影場所 63",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010346.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -20.55488256982309,
+                    "yaw": -26.997322732035798,
+                    "type": "scene",
+                    "text": "撮影場所 64に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene64"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 62に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene62"
+                }
+            ]
+        },
+        "scene64":{
+            "compass" : true,
+            "title": "撮影場所 64",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010347.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.086379589816385,
+                    "yaw": 14.928846783211732,
+                    "type": "scene",
+                    "text": "撮影場所 65に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene65"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 63に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene63"
+                }
+            ]
+        },
+        //ここから新天地通
+        "scene65":{
+            "compass" : true,
+            "title": "撮影場所 65",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010348.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.972040716506736,
+                    "yaw": 14.60210657509673,
+                    "type": "scene",
+                    "text": "撮影場所 66に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene66"
+                },
+                {
+                    "pitch": -17.222370647728106,
+                    "yaw": -100.76977135696994,
+                    "type": "scene",
+                    "text": "撮影場所 64に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene64"
+                }
+            ]
+        },
+        "scene66":{
+            "compass" : true,
+            "title": "撮影場所 66",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010349.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.333869193218085,
+                    "yaw": 19.117087909015716,
+                    "type": "scene",
+                    "text": "撮影場所 67に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene67"
+                },
+                {
+                    "pitch": -17.104623135807184,
+                    "yaw": -161.2556992843308,
+                    "type": "scene",
+                    "text": "撮影場所 65に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene65"
+                }
+            ]
+        },
+        "scene67":{
+            "compass" : true,
+            "title": "撮影場所 67",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010350.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.157638017465462,
+                    "yaw": 19.968017833694354,
+                    "type": "scene",
+                    "text": "撮影場所 68に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene68"
+                },
+                {
+                    "pitch": -19.68581756905513,
+                    "yaw": -158.92494313442685,
+                    "type": "scene",
+                    "text": "撮影場所 66に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene66"
+                }
+            ]
+        },
+        "scene68":{
+            "compass" : true,
+            "title": "撮影場所 68",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010351.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.74705937852475,
+                    "yaw": 29.235477387122998,
+                    "type": "scene",
+                    "text": "撮影場所 69に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene69"
+                },
+                {
+                    "pitch": -20.04315560870955,
+                    "yaw": -152.4500142478576,
+                    "type": "scene",
+                    "text": "撮影場所 67に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene67"
+                }
+            ]
+        },
+        "scene69":{
+            "compass" : true,
+            "title": "撮影場所 69",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010352.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -20.157255691216296,
+                    "yaw": 26.289692151641738,
+                    "type": "scene",
+                    "text": "撮影場所 70に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene70"
+                },
+                {
+                    "pitch": -16.721773209250212,
+                    "yaw": -154.52201605038576,
+                    "type": "scene",
+                    "text": "撮影場所 68に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene68"
+                }
+            ]
+        },
+        "scene70":{
+            "compass" : true,
+            "title": "撮影場所 70",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010353.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.608879885558473,
+                    "yaw": 31.93735325593596,
+                    "type": "scene",
+                    "text": "撮影場所 7に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene7"
+                },
+                {
+                    "pitch": -18.604112360093904,
+                    "yaw": -149.72928677803569,
+                    "type": "scene",
+                    "text": "撮影場所 69に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene69"
+                }
+            ]
+        },
+        "scene71":{
+            "compass" : true,
+            "title": "撮影場所 71",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010354.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.122297797868471,
+                    "yaw": 25.217819852943848,
+                    "type": "scene",
+                    "text": "撮影場所 72に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene72"
+                },
+                {
+                    "pitch": -20.061831069238917,
+                    "yaw": -140.2548173689431,
+                    "type": "scene",
+                    "text": "撮影場所 7に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene7"
+                },
+                {
+                    "pitch":  10.740288620259975,
+                    "yaw": -6.851434376847417,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/takohonten.jpg",
+                        "title":"たこ本舗新天地通り店",
+                        "text": "豚骨スープを生地に練り込んだ濃厚な味わいと、とろとろ食感が特徴。",
+                        "hours":"11:00~20:00",
+                        "holiday":"不定休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/takohonpo.shintenchidoriten/"},
+                            {"type":"menu","url":"https://maps.app.goo.gl/i89CqTeSAP1AJbPR7"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene72":{
+            "compass" : true,
+            "title": "撮影場所 72",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010355.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.608879885558473,
+                    "yaw": 31.93735325593596,
+                    "type": "scene",
+                    "text": "撮影場所 73に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene73"
+                },
+                {
+                    "pitch": -18.604112360093904,
+                    "yaw": -149.72928677803569,
+                    "type": "scene",
+                    "text": "撮影場所 71に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene71"
+                }
+            ]
+        },
+        "scene73":{
+            "compass" : true,
+            "title": "撮影場所 73",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010356.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.086534759796283,
+                    "yaw": 31.191708804535743,
+                    "type": "scene",
+                    "text": "撮影場所 74に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene74"
+                },
+                {
+                    "pitch": -18.257029146317148,
+                    "yaw": -145.98573820622028,
+                    "type": "scene",
+                    "text": "撮影場所 72に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene72"
+                }
+            ]
+        },
+        "scene74":{
+            "compass" : true,
+            "title": "撮影場所 74",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010358.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.33104750894934,
+                    "yaw": 38.53653418683506,
+                    "type": "scene",
+                    "text": "撮影場所 75に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene75"
+                },
+                {
+                    "pitch": -19.09877875507515,
+                    "yaw": -154.9828165237606,
+                    "type": "scene",
+                    "text": "撮影場所 73に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene73"
+                },
+                {
+                    "pitch":  2.29333977703524,
+                    "yaw": -169.33655029943972,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/LEMOTTO.jpg",
+                        "title":"レモネード専門店「LEMOTTO」",
+                        "text": "舗喫茶サンモリッツがプロデュースするレモネード専門店「LEMOTTO（レモット）」。レモネードに使われている自家製レモンシロップには、コールドプレス製法で抽出した、レモンの生絞り果汁がたっぷり。爽やかなフレッシュ感とコクのある甘味のハーモニーを楽しめる。",
+                        "hours":"11:00~18:00",
+                        "holiday":"なし",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/lemotto_lemonade/"},
+                            {"type":"website","url":"https://stmoritz.jp/lemotto/"},
+                            {"type":"menu","url":"https://stmoritz.jp/wp-content/uploads/2025/11/lemotto_menu.jpg"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene75":{
+            "compass" : true,
+            "title": "撮影場所 75",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010359.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.40721673534562,
+                    "yaw": 37.38672115926219,
+                    "type": "scene",
+                    "text": "撮影場所 76に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene76"
+                },
+                {
+                    "pitch": -19.26856662864706,
+                    "yaw": -144.58211082695334,
+                    "type": "scene",
+                    "text": "撮影場所 74に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene74"
+                },
+                {
+                    "pitch":  12.899872743785677,
+                    "yaw": 8.230269516709516,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/karaagemarubou.jfif",
+                        "title":"から揚げ専門店まる芳",
+                        "text": "揚げたてで提供される衣がサクッとしていて、中身の鶏肉はプリプリとしながらも柔らかい。",
+                        "hours":"11:00~19:00",
+                        "holiday":"不定休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/osu_maruyoshi/"},
+                            {"type":"menu","url":"https://osu-tabearuki.com/wp-content/uploads/2026/02/PXL_20260228_030033147-1152x1536.jpg"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene76":{
+            "compass" : true,
+            "title": "撮影場所 76",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010360.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.857828981990995,
+                    "yaw": 23.791554888266162,
+                    "type": "scene",
+                    "text": "撮影場所 77に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene77"
+                },
+                {
+                    "pitch": -18.409353011027104,
+                    "yaw": -153.94920676856933,
+                    "type": "scene",
+                    "text": "撮影場所 75に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene75"
+                },
+                {
+                    "pitch":  10.147096868103384,
+                    "yaw": -42.11000745594833,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/paopaotei.jpg",
+                        "title":"台湾の焼き包子包包亭",
+                        "text": "台湾の店で修業した店主が営むお店。<br>肉のうま味を閉じ込めた「肉包(ロウパオ)」とざく切りのキャベツが入った「菜包(ツァイパオ)」が人気。",
+                        "hours":"11:30~20:00(土日祝は11:00~)",
+                        "holiday":"毎週水曜日",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/paopaotei803_osu/"},
+                            {"type":"website","url":"http://paozu.asia/"},
+                            {"type":"menu","url":"http://paozu.asia/menu/"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene77":{
+            "compass" : true,
+            "title": "撮影場所 77",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010361.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.608879885558473,
+                    "yaw": 31.93735325593596,
+                    "type": "scene",
+                    "text": "撮影場所 78に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene78"
+                },
+                {
+                    "pitch": -18.604112360093904,
+                    "yaw": -149.72928677803569,
+                    "type": "scene",
+                    "text": "撮影場所 76に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene76"
+                }
+            ]
+        },
+        "scene78":{
+            "compass" : true,
+            "title": "撮影場所 78",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010362.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.608879885558473,
+                    "yaw": 31.93735325593596,
+                    "type": "scene",
+                    "text": "撮影場所 79に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene79"
+                },
+                {
+                    "pitch": -18.604112360093904,
+                    "yaw": -149.72928677803569,
+                    "type": "scene",
+                    "text": "撮影場所 77に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene77"
+                },
+                {
+                    "pitch":  10.698577889346941,
+                    "yaw": -45.16259678885247,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/kohakudou.jpg",
+                        "title":"琥珀堂 大須店",
+                        "text": "生わらびもちと種類豊富なわらびもちドリンクを楽しめる。生わらびもちの味は、きな粉、抹茶、チョコの3種類。",
+                        "hours":"12:00~19:00",
+                        "holiday":"無休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/kohakudo_osu/"},
+                            {"type":"website","url":"https://kohakudou.co.jp/?utm_source=ig&utm_medium=social&utm_content=link_in_bio&fbclid=PAZXh0bgNhZW0CMTEAc3J0YwZhcHBfaWQPOTM2NjE5NzQzMzkyNDU5AAGn0Ii1OhHwuxJfPQh0Rk-9GpyJ1kaDgpcEYT-1l7WluA053SBr1svDIKQy1w8_aem_Xaq7ycKklHLE9o5n2OqHPg"},
+                            {"type":"menu","url":"https://tabelog.com/aichi/A2301/A230103/23089986/dtlmenu/photo/"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene79":{
+            "compass" : true,
+            "title": "撮影場所 79",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010363.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.515561480032712,
+                    "yaw": 28.211555753033693,
+                    "type": "scene",
+                    "text": "撮影場所 80に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene80"
+                },
+                {
+                    "pitch": -13.807519500358664,
+                    "yaw": -149.40206944144597,
+                    "type": "scene",
+                    "text": "撮影場所 78に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene78"
+                }
+            ]
+        },
+        "scene80":{
+            "compass" : true,
+            "title": "撮影場所 80",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010364.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.678738919990295,
+                    "yaw": 33.17274027392719,
+                    "type": "scene",
+                    "text": "撮影場所 81に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene81"
+                },
+                {
+                    "pitch": -14.124857632875726,
+                    "yaw": -147.74394150242767,
+                    "type": "scene",
+                    "text": "撮影場所 79に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene79"
+                }
+            ]
+        },
+        "scene81":{
+            "compass" : true,
+            "title": "撮影場所 81",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010365.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.364255308401347,
+                    "yaw": 35.33759610810866,
+                    "type": "scene",
+                    "text": "撮影場所 82に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene82"
+                },
+                {
+                    "pitch": -17.783807115953742,
+                    "yaw": -144.89082380211914,
+                    "type": "scene",
+                    "text": "撮影場所 80に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene80"
+                }
+            ]
+        },
+        "scene82":{
+            "compass" : true,
+            "title": "撮影場所 82",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010366.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.438905991152126,
+                    "yaw": 42.82605737170641,
+                    "type": "scene",
+                    "text": "撮影場所 83に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene83"
+                },
+                {
+                    "pitch": -19.42126643742796,
+                    "yaw": -140.74147292837088,
+                    "type": "scene",
+                    "text": "撮影場所 81に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene81"
+                }
+            ]
+        },
+        "scene83":{
+            "compass" : true,
+            "title": "撮影場所 83",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010367.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -20.226588143467698,
+                    "yaw": 9.09156291650412,
+                    "type": "scene",
+                    "text": "撮影場所 84に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene84"
+                },
+                {
+                    "pitch": -20.91800550272624,
+                    "yaw": -171.10475659603298,
+                    "type": "scene",
+                    "text": "撮影場所 82に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene82"
+                }
+            ]
+        },
+        "scene84":{
+            "compass" : true,
+            "title": "撮影場所 84",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010368.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.670967720253152,
+                    "yaw": 2.9916302440664353,
+                    "type": "scene",
+                    "text": "撮影場所 85に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene85"
+                },
+                {
+                    "pitch": -18.227550804153736,
+                    "yaw": -176.4777090429301,
+                    "type": "scene",
+                    "text": "撮影場所 83に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene83"
+                },
+                {
+                    "pitch":  -0.7657402930761689,
+                    "yaw": 90.48130690471143,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/10enpan.jfif",
+                        "title":"大王チーズ10円パン名古屋大須店",
+                        "text": "とろりとしたチーズと10円硬貨のフォルムがSNSで大流行した10円パン。20203年にはTikTok上半期トレンド大賞においてグルメ部門で入賞を果たした。",
+                        "hours":"11:00~19:00(土日祝は10:00~)",
+                        "holiday":"無休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/10yenpan_official/"},
+                            {"type":"website","url":"http://10yenpan.jp/"},
+                            {"type":"menu","url":"http://10yenpan.jp/#menu"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene85":{
+            "compass" : true,
+            "title": "撮影場所 85",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010369.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.28106144625295,
+                    "yaw": 12.064104631827544,
+                    "type": "scene",
+                    "text": "撮影場所 86に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene86"
+                },
+                {
+                    "pitch": -16.549729258203847,
+                    "yaw": -171.43472010301062,
+                    "type": "scene",
+                    "text": "撮影場所 84に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene84"
+                },
+                {
+                    "pitch":  7.927601890185311,
+                    "yaw": 111.52713770734724,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/taiwanyatai_shintenti.jpg",
+                        "title":"李さんの台湾名物屋台 新天地通店",
+                        "text": "大須内で3店舗を構える、人気の台湾からあげ。タレは、ピリ辛・甘辛・フルーティと辛さの味付けが選べる。",
+                        "hours":"11:00~20:00(土日祝は10:30~)",
+                        "holiday":"無休",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/leestaiwankitchen/"},
+                            {"type":"website","url":"https://shop.lees-taiwan-kitchen.com/"},
+                            {"type":"menu","url":"https://shop.lees-taiwan-kitchen.com/p/00002"}
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene86":{
+            "compass" : true,
+            "title": "撮影場所 86",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010370.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.485591388175127,
+                    "yaw": 4.888355563975837,
+                    "type": "scene",
+                    "text": "撮影場所 87に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene87"
+                },
+                {
+                    "pitch": -19.68248474734754,
+                    "yaw": 179.5022338977853,
+                    "type": "scene",
+                    "text": "撮影場所 85に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene85"
+                }
+            ]
+        },
+        "scene87":{
+            "compass" : true,
+            "title": "撮影場所 87",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010371.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.69862229751895,
+                    "yaw": -82.27754054277085,    //あとで設定必要(赤門通)
+                    "type": "scene",
+                    "text": "撮影場所 95に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene95"
+                },
+                {
+                    "pitch": -13.687443765982115,
+                    "yaw": 103.39517541843608,   //あとで設定必要(赤門通)
+                    "type": "scene",
+                    "text": "撮影場所 94に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene94"
+                },
+                {
+                    "pitch": -19.25932504810182,
+                    "yaw": -178.2771229631984,    //あとで設定必要(赤門通)
+                    "type": "scene",
+                    "text": "撮影場所 86に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene86"
+                },
+                {
+                    "pitch":  7.1885170201578354,
+                    "yaw": 130.0096111927462,
+                    "type": "info",
+                    "createTooltipFunc": showStoreDetailsTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/oosunoyottyan.jfif",
+                        "title":"大須のよっちゃん",
+                        "text": "新天地通のマルチナボックス向かいにある、大久保の時代から愛され続けるアットホームなお店。「かんちゃん農園」から直送されたフレッシュでジューシーないちごを使用している。極薄の飴はパリパリ食感で甘すぎず、5粒550円と大須エリアで最安プライスなのも魅力!店先のベンチで座って食べることもできる。",
+                        "hours":"11:00~19:00",
+                        "holiday":"火曜日・水曜日",
+                        "links":[
+                            {"type":"instagram","url":"https://www.instagram.com/yocchan_osu/?hl=ja"},
+                            {"type":"menu","url":"https://juno.nagoya/entry/yochan/#toc3"}
+                        ]
+                    }
+                }
+            ]
+        },
+        //ここから赤門通
+        "scene88":{
+            "compass" : true,
+            "title": "撮影場所 88",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010372.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.516312562763831,
+                    "yaw": 14.049646486817593,    
+                    "type": "scene",
+                    "text": "撮影場所 89に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene89"
+                },
+            ]
+        },
+        "scene89":{
+            "compass" : true,
+            "title": "撮影場所 89",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010373.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.852574711831766,
+                    "yaw": 19.29370523367919,    
+                    "type": "scene",
+                    "text": "撮影場所 90に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene90"
+                },
+                {
+                    "pitch": -16.812810370850176,
+                    "yaw": -153.97042355131939,   
+                    "type": "scene",
+                    "text": "撮影場所 88に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene88"
+                }
+            ]
+        },
+        "scene90":{
+            "compass" : true,
+            "title": "撮影場所 90",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010374.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.069454306192851,
+                    "yaw": 24.10454713147118,    
+                    "type": "scene",
+                    "text": "撮影場所 91に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene91"
+                },
+                {
+                    "pitch": -14.763175987186006,
+                    "yaw": -145.99123758290952,   
+                    "type": "scene",
+                    "text": "撮影場所 89に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene89"
+                }
+            ]
+        },
+        "scene91":{
+            "compass" : true,
+            "title": "撮影場所 91",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010375.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.630029746032829,
+                    "yaw": 19.916734001994094,    
+                    "type": "scene",
+                    "text": "撮影場所 92に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene92"
+                },
+                {
+                    "pitch": -16.815718718996905,
+                    "yaw": -152.57525798875093,   
+                    "type": "scene",
+                    "text": "撮影場所 90に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene90"
+                }
+            ]
+        },
+        "scene92":{
+            "compass" : true,
+            "title": "撮影場所 92",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010376.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.158859639488984,
+                    "yaw": 25.266416528770993,    
+                    "type": "scene",
+                    "text": "撮影場所 93に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene93"
+                },
+                {
+                    "pitch": -17.98023482826108,
+                    "yaw": -144.88960579735823,   
+                    "type": "scene",
+                    "text": "撮影場所 91に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene91"
+                }
+            ]
+        },
+        "scene93":{
+            "compass" : true,
+            "title": "撮影場所 93",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010377.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.081930545483402,
+                    "yaw": 24.269636095840546,    
+                    "type": "scene",
+                    "text": "撮影場所 94に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene94"
+                },
+                {
+                    "pitch": -17.448036876057092,
+                    "yaw": -146.31732540630298,   
+                    "type": "scene",
+                    "text": "撮影場所 92に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene92"
+                }
+            ]
+        },
+        "scene94":{
+            "compass" : true,
+            "title": "撮影場所 94",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010378.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.44728304774088,
+                    "yaw": 10.798684027433508,    
+                    "type": "scene",
+                    "text": "撮影場所 87に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene87"
+                },
+                {
+                    "pitch": -20.582509354020686,
+                    "yaw": -156.3230284038594,   
+                    "type": "scene",
+                    "text": "撮影場所 93に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene93"
+                }
+            ]
+        },
+        "scene95":{
+            "compass" : true,
+            "title": "撮影場所 95",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010380.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.051261602459203,
+                    "yaw": 17.75628800437202,    
+                    "type": "scene",
+                    "text": "撮影場所 96に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene96"
+                },
+                {
+                    "pitch": -17.71645619059812,
+                    "yaw": -142.5021368851933,   
+                    "type": "scene",
+                    "text": "撮影場所 87に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene87"
+                }
+            ]
+        },
+        "scene96":{
+            "compass" : true,
+            "title": "撮影場所 96",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010381.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.772541410734975,
+                    "yaw": 13.98946293059997,    
+                    "type": "scene",
+                    "text": "撮影場所 97に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene97"
+                },
+                {
+                    "pitch": -18.135800118424125,
+                    "yaw": -156.53715007621247,   
+                    "type": "scene",
+                    "text": "撮影場所 95に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene95"
+                }
+            ]
+        },
+        "scene97":{
+            "compass" : true,
+            "title": "撮影場所 97",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010382.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.377659213965476,
+                    "yaw": 8.29064735725745,    
+                    "type": "scene",
+                    "text": "撮影場所 98に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene98"
+                },
+                {
+                    "pitch": -19.093159592395242,
+                    "yaw": -162.22840768782356,   
+                    "type": "scene",
+                    "text": "撮影場所 96に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene96"
+                }
+            ]
+        },
+        "scene98":{
+            "compass" : true,
+            "title": "撮影場所 98",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010383.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.291043379792256,
+                    "yaw": 11.930669792224162,    
+                    "type": "scene",
+                    "text": "撮影場所 99に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene99"
+                },
+                {
+                    "pitch": -17.9698643410911,
+                    "yaw": -162.13222783931604,   
+                    "type": "scene",
+                    "text": "撮影場所 97に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene97"
+                }
+            ]
+        },
+        "scene99":{
+            "compass" : true,
+            "title": "撮影場所 99",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010384.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.879523553507351,
+                    "yaw": 10.060519398579434,    
+                    "type": "scene",
+                    "text": "撮影場所 100に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene100"
+                },
+                {
+                    "pitch": -17.574178612486897,
+                    "yaw": -160.20632458068593,   
+                    "type": "scene",
+                    "text": "撮影場所 98に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene98"
+                }
+            ]
+        },
+        "scene100":{
+            "compass" : true,
+            "title": "撮影場所 100",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010385.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.724178685944688,
+                    "yaw": 1.016831015884927,    
+                    "type": "scene",
+                    "text": "撮影場所 101に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene101"
+                },
+                {
+                    "pitch": -16.734857872133187,
+                    "yaw": -170.2686327693051,   
+                    "type": "scene",
+                    "text": "撮影場所 99に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene99"
+                }
+            ]
+        },
+        "scene101":{
+            "compass" : true,
+            "title": "撮影場所 101",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010386.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.9121329180251,
+                    "yaw": 11.569914785102677,    
+                    "type": "scene",
+                    "text": "撮影場所 102に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene102"
+                },
+                {
+                    "pitch": -14.424369175467541,
+                    "yaw": -164.61854630472945,   
+                    "type": "scene",
+                    "text": "撮影場所 100に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene100"
+                }
+            ]
+        },
+        "scene102":{
+            "compass" : true,
+            "title": "撮影場所 102",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010387.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.529966759499095,
+                    "yaw": 0.581410327756517,    
+                    "type": "scene",
+                    "text": "撮影場所 103に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene103"
+                },
+                {
+                    "pitch": -14.781317680299034,
+                    "yaw": -170.32105077022555,   
+                    "type": "scene",
+                    "text": "撮影場所 101に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene101"
+                }
+            ]
+        },
+        "scene103":{
+            "compass" : true,
+            "title": "撮影場所 103",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010388.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.792962954008336,
+                    "yaw": 14.972184329304117,    
+                    "type": "scene",
+                    "text": "撮影場所 104に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene104"
+                },
+                {
+                    "pitch": -15.44261365975884,
+                    "yaw": -155.47301973219137,   
+                    "type": "scene",
+                    "text": "撮影場所 102に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene102"
+                }
+            ]
+        },
+        "scene104":{
+            "compass" : true,
+            "title": "撮影場所 104",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010389.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.809473200567487,
+                    "yaw": 11.405760572974787,    
+                    "type": "scene",
+                    "text": "撮影場所 105に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene105"
+                },
+                {
+                    "pitch": -19.293206966333837,
+                    "yaw": -156.10100203134647,   
+                    "type": "scene",
+                    "text": "撮影場所 103に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene103"
+                }
+            ]
+        },
+        "scene105":{
+            "compass" : true,
+            "title": "撮影場所 105",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010390.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.098364537194774,
+                    "yaw": -1.74738264882291,    
+                    "type": "scene",
+                    "text": "撮影場所 106に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene106"
+                },
+                {
+                    "pitch": -14.384109744221393,
+                    "yaw": -173.24560177254463,   
+                    "type": "scene",
+                    "text": "撮影場所 104に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene104"
+                }
+            ]
+        },
+        "scene106":{
+            "compass" : true,
+            "title": "撮影場所 106",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010391.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.001415986976477,
+                    "yaw": 10.131830257108199,    
+                    "type": "scene",
+                    "text": "撮影場所 107に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene107"
+                },
+                {
+                    "pitch": -15.778866808091351,
+                    "yaw": -160.7425234712579,   
+                    "type": "scene",
+                    "text": "撮影場所 105に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene105"
+                }
+            ]
+        },
+        "scene107":{
+            "compass" : true,
+            "title": "撮影場所 107",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010392.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.551058768190966,
+                    "yaw": 18.871506680181994,    
+                    "type": "scene",
+                    "text": "撮影場所 108に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene108"
+                },
+                {
+                    "pitch": -14.923528047377475,
+                    "yaw": -150.066486219217,   
+                    "type": "scene",
+                    "text": "撮影場所 106に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene106"
+                }
+            ]
+        },
+        "scene108":{
+            "compass" : true,
+            "title": "撮影場所 108",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010393.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.371663734326079,
+                    "yaw": -9.546268853308895,    
+                    "type": "scene",
+                    "text": "撮影場所 109に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene109"
+                },
+                {
+                    "pitch": -17.333530283143908,
+                    "yaw": 179.07659869049007,   
+                    "type": "scene",
+                    "text": "撮影場所 107に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene107"
+                }
+            ]
+        },
+        "scene109":{
+            "compass" : true,
+            "title": "撮影場所 109",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010394.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.38656299560915,
+                    "yaw": 0.6005194757279602,    
+                    "type": "scene",
+                    "text": "撮影場所 110に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene110"
+                },
+                {
+                    "pitch": -16.835192366073716,
+                    "yaw": -168.4397547356145,   
+                    "type": "scene",
+                    "text": "撮影場所 108に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene108"
+                }
+            ]
+        },
+        "scene110":{
+            "compass" : true,
+            "title": "撮影場所 110",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010395.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -11.258153613645586,
+                    "yaw": 6.0423463010077825,    
+                    "type": "scene",
+                    "text": "撮影場所 111に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene111"
+                },
+                {
+                    "pitch": -15.620206526984923,
+                    "yaw": -163.89242454305554,   
+                    "type": "scene",
+                    "text": "撮影場所 109に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene109"
+                }
+            ]
+        },
+        "scene111":{
+            "compass" : true,
+            "title": "撮影場所 111",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010396.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.013787157512118,
+                    "yaw": 12.31693492301774,    
+                    "type": "scene",
+                    "text": "撮影場所 112に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene112"
+                },
+                {
+                    "pitch": -14.5590069623213,
+                    "yaw": -158.44558884533947,   
+                    "type": "scene",
+                    "text": "撮影場所 110に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene110"
+                }
+            ]
+        },
+        "scene112":{
+            "compass" : true,
+            "title": "撮影場所 112",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010397.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -9.592737350731367,
+                    "yaw": -0.6534309239908704,    
+                    "type": "scene",
+                    "text": "撮影場所 113に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene113"
+                },
+                {
+                    "pitch": -15.009979148835123,
+                    "yaw": -177.28163927665167,   
+                    "type": "scene",
+                    "text": "撮影場所 111に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene111"
+                }
+            ]
+        },
+        "scene113":{
+            "compass" : true,
+            "title": "撮影場所 113",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010398.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -10.192883395514182,
+                    "yaw": 5.652755734787547,    
+                    "type": "scene",
+                    "text": "撮影場所 114に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene114"
+                },
+                {
+                    "pitch": -16.829152084420908,
+                    "yaw": -169.42115064790798,   
+                    "type": "scene",
+                    "text": "撮影場所 112に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene112"
+                }
+            ]
+        },
+        "scene114":{
+            "compass" : true,
+            "title": "撮影場所 114",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010399.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.506358555216721,
+                    "yaw": 5.968075282033778,    
+                    "type": "scene",
+                    "text": "撮影場所 115に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene115"
+                },
+                {
+                    "pitch": -13.266925397527764,
+                    "yaw": -169.37685699078042,   
+                    "type": "scene",
+                    "text": "撮影場所 113に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene113"
+                }
+            ]
+        },
+        "scene115":{
+            "compass" : true,
+            "title": "撮影場所 115",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010400.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -9.717460138268079,
+                    "yaw": 0.450083444324281,    
+                    "type": "scene",
+                    "text": "撮影場所 116に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene116"
+                },
+                {
+                    "pitch": -12.94314887084171,
+                    "yaw": -174.85999628829794,   
+                    "type": "scene",
+                    "text": "撮影場所 114に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene114"
+                }
+            ]
+        },
+        "scene116":{
+            "compass" : true,
+            "title": "撮影場所 116",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010401.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.957789306816169,
+                    "yaw": 3.1106496394472245,    
+                    "type": "scene",
+                    "text": "撮影場所 117に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene117"
+                },
+                {
+                    "pitch": -11.728907462824669,
+                    "yaw": -171.6745162507202,   
+                    "type": "scene",
+                    "text": "撮影場所 115に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene115"
+                }
+            ]
+        },
+        "scene117":{
+            "compass" : true,
+            "title": "撮影場所 117",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010402.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.205838377116603,
+                    "yaw": -0.0900184664233462,    
+                    "type": "scene",
+                    "text": "撮影場所 118に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene118"
+                },
+                {
+                    "pitch": -12.074811584013199,
+                    "yaw": -175.26151345288383,   
+                    "type": "scene",
+                    "text": "撮影場所 116に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene116"
+                }
+            ]
+        },
+        "scene118":{
+            "compass" : true,
+            "title": "撮影場所 118",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010403.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.372738633568492,
+                    "yaw": 0.0900184664233462,    
+                    "type": "scene",
+                    "text": "撮影場所 119に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene119"
+                },
+                {
+                    "pitch": -13.091728679143774,
+                    "yaw": -173.27573657148122,   
+                    "type": "scene",
+                    "text": "撮影場所 117に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene117"
+                }
+            ]
+        },
+        "scene119":{
+            "compass" : true,
+            "title": "撮影場所 119",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010404.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.729984016058122,
+                    "yaw": -6.548193918370718,    
+                    "type": "scene",
+                    "text": "撮影場所 120に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene120"
+                },
+                {
+                    "pitch": -15.54324923932345,
+                    "yaw": -175.59994235214197,   
+                    "type": "scene",
+                    "text": "撮影場所 118に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene118"
+                }
+            ]
+        },
+        "scene120":{
+            "compass" : true,
+            "title": "撮影場所 120",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010405.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.055090914964115,
+                    "yaw": -75.64241935651467,    
+                    "type": "scene",
+                    "text": "撮影場所 121に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene121"
+                },
+                {
+                    "pitch": -14.260004340960716,
+                    "yaw": -164.271997509367,   
+                    "type": "scene",
+                    "text": "撮影場所 119に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene119"
+                }
+            ]
+        },
+        //ここから大須本通
+        "scene121":{
+            "compass" : true,
+            "title": "撮影場所 121",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010406.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.577257083266833,
+                    "yaw": 20.365393619790844,    
+                    "type": "scene",
+                    "text": "撮影場所 122に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene122"
+                },
+                {
+                    "pitch": -22.716894004170296,
+                    "yaw": -162.79936198678487,   
+                    "type": "scene",
+                    "text": "撮影場所 120に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene120"
+                }
+            ]
+        },
+        "scene122":{
+            "compass" : true,
+            "title": "撮影場所 122",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010407.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.151987922547388,
+                    "yaw": 14.893486199226647,    
+                    "type": "scene",
+                    "text": "撮影場所 123に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene123"
+                },
+                {
+                    "pitch": -18.825176480767905,
+                    "yaw": -175.57098503193276,   
+                    "type": "scene",
+                    "text": "撮影場所 121に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene121"
+                }
+            ]
+        },
+        "scene123":{
+            "compass" : true,
+            "title": "撮影場所 123",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010408.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -19.586160364925686,
+                    "yaw": -0.004273295991784609,    
+                    "type": "scene",
+                    "text": "撮影場所 124に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene124"
+                },
+                {
+                    "pitch": -15.937844534869358,
+                    "yaw": 178.77186452355147,   
+                    "type": "scene",
+                    "text": "撮影場所 122に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene122"
+                }
+            ]
+        },
+        "scene124":{
+            "compass" : true,
+            "title": "撮影場所 124",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010409.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -17.441935952829354,
+                    "yaw": 4.948741621164373,    
+                    "type": "scene",
+                    "text": "撮影場所 125に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene125"
+                },
+                {
+                    "pitch": -15.534886331544774,
+                    "yaw": -175.21602377427308,   
+                    "type": "scene",
+                    "text": "撮影場所 123に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene123"
+                }
+            ]
+        },
+        "scene125":{
+            "compass" : true,
+            "title": "撮影場所 125",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010410.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.655411825770745,
+                    "yaw": 5.637853994181443,    
+                    "type": "scene",
+                    "text": "撮影場所 126に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene126"
+                },
+                {
+                    "pitch": -18.02166190031458,
+                    "yaw": -168.6910391374546,   
+                    "type": "scene",
+                    "text": "撮影場所 124に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene124"
+                },
+                {
+                    "pitch": 30.16544986576464,
+                    "yaw": -45.507956249542595,
+                    "type": "info",
+                    "createTooltipFunc": showMultiLinkTooltip,
+                    "createTooltipArgs": {
+                        "image": "https://susfukayashare2024.z11.web.core.windows.net/T123150/food/gimick.jfif",
+                        "title": "X-HALL",
+                        "links":[
+                            { "label": "ギミック公式X", "url": "https://x.com/gimmick__info_" },
+                            { "label": "こづりるちゃんねる", "url": "https://www.youtube.com/@%E3%81%93%E3%81%A5%E3%82%8A%E3%82%8B%E3%81%A1%E3%82%83%E3%82%93%E3%81%AD%E3%82%8B" },
+                            { "label": "キラリちゃんX", "url": "https://x.com/__GOD666" },
+                            { "label": "テンちゃんX", "url": "https://x.com/daten_o_x" },
+                            { "label": "ロロちゃんX", "url": "https://x.com/anraku_chan" },
+                            { "label": "ノアちゃんX", "url": "https://x.com/noanya4_" },
+                            { "label": "めぐりさんX", "url": "https://x.com/mgr__x_x" },
+                            { "label": "りるちゃんX", "url": "https://x.com/rwu7f" },
+                            { "label": "こづX", "url": "https://x.com/kozuki_yuui" }
+                        ]
+                    }
+                }
+            ]
+        },
+        "scene126":{
+            "compass" : true,
+            "title": "撮影場所 126",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010411.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -16.10617417093484,
+                    "yaw": 15.844838241664352,    
+                    "type": "scene",
+                    "text": "撮影場所 127に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene127"
+                },
+                {
+                    "pitch": -15.980613514281789,
+                    "yaw": -159.7746795164427,   
+                    "type": "scene",
+                    "text": "撮影場所 125に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene125"
+                }
+            ]
+        },
+        "scene127":{
+            "compass" : true,
+            "title": "撮影場所 127",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010412.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -18.5897552043409,
+                    "yaw": 9.29532230901637,    
+                    "type": "scene",
+                    "text": "撮影場所 128に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene128"
+                },
+                {
+                    "pitch": -16.308182059464837,
+                    "yaw": -170.7607508749655,   
+                    "type": "scene",
+                    "text": "撮影場所 126に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene126"
+                }
+            ]
+        },
+        "scene128":{
+            "compass" : true,
+            "title": "撮影場所 128",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010413.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.6775032550066,
+                    "yaw": 11.51165588278841,    
+                    "type": "scene",
+                    "text": "撮影場所 129に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene129"
+                },
+                {
+                    "pitch": -17.176612508583435,
+                    "yaw": -169.79644876992398,   
+                    "type": "scene",
+                    "text": "撮影場所 127に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene127"
+                }
+            ]
+        },
+        "scene129":{
+            "compass" : true,
+            "title": "撮影場所 129",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010414.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -11.146641241392071,
+                    "yaw": 10.649990158406863,    
+                    "type": "scene",
+                    "text": "撮影場所 130に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene130"
+                },
+                {
+                    "pitch": -15.321110496797749,
+                    "yaw": -169.88513074705364,   
+                    "type": "scene",
+                    "text": "撮影場所 128に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene128"
+                }
+            ]
+        },
+        "scene130":{
+            "compass" : true,
+            "title": "撮影場所 130",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010415.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.678415225585281,
+                    "yaw": 11.096857750950601,    
+                    "type": "scene",
+                    "text": "撮影場所 131に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene131"
+                },
+                {
+                    "pitch": -13.207362665017488,
+                    "yaw": -172.49331547537702,   
+                    "type": "scene",
+                    "text": "撮影場所 129に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene129"
+                }
+            ]
+        },
+        "scene131":{
+            "compass" : true,
+            "title": "撮影場所 131",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010416.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -14.906634888706382,
+                    "yaw": 1.3456650369216152,    
+                    "type": "scene",
+                    "text": "撮影場所 132に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene132"
+                },
+                {
+                    "pitch": -16.138836784127243,
+                    "yaw": -179.33056741194923,   
+                    "type": "scene",
+                    "text": "撮影場所 130に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene130"
+                }
+            ]
+        },
+        "scene132":{
+            "compass" : true,
+            "title": "撮影場所 132",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010417.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -12.943053543007835,
+                    "yaw": 9.043961235403987,    
+                    "type": "scene",
+                    "text": "撮影場所 133に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene133"
+                },
+                {
+                    "pitch": -14.45110720471747,
+                    "yaw": -172.02635971994658,   
+                    "type": "scene",
+                    "text": "撮影場所 131に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene131"
+                }
+            ]
+        },
+        "scene133":{
+            "compass" : true,
+            "title": "撮影場所 133",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010418.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -15.367942102329922,
+                    "yaw": 9.404167625019266,    
+                    "type": "scene",
+                    "text": "撮影場所 134に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene134"
+                },
+                {
+                    "pitch": -14.637861119446816,
+                    "yaw": -172.29020309542176,   
+                    "type": "scene",
+                    "text": "撮影場所 132に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene132"
+                }
+            ]
+        },
+        "scene134":{
+            "compass" : true,
+            "title": "撮影場所 134",
+            "hfov" : 110,
+            "type" :"equirectangular",
+            "panorama" : "https://susfukayashare2024.z11.web.core.windows.net/T123150/images_renew/R0010419.jpeg",
+            "hotSpots": [
+                {
+                    "pitch": -13.85473450676164,
+                    "yaw": 18.68437811120947,    
+                    "type": "scene",
+                    "text": "撮影場所 31に移動",    
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene31"
+                },
+                {
+                    "pitch": -18.823303665529686,
+                    "yaw": -162.0138822634345,   
+                    "type": "scene",
+                    "text": "撮影場所 133に移動",
+                    "createTooltipFunc": tour,
+                    "createTooltipArgs": "scene133"
+                }
+            ]
+        },
+    } 
+}); 
+
+// 移動用の関数
+function tour(hotSpotDiv, args) {
+    hotSpotDiv.addEventListener('click', function() {
+        viewer.loadScene(args, viewer.getPitch(), viewer.getYaw(), viewer.getHfov());
+    });
+}
+
+// 💡 マルチリンク（X-HALL等）用の洗練されたデザイン関数
+function showMultiLinkTooltip(hotSpotDiv, args) {
+    hotSpotDiv.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'multi-link-container';
+    
+    var htmlContent = '';
+    if (args.image) {
+        htmlContent += `<img src="${args.image}" style="width: 100%; height: 70px; object-fit: cover; border-radius: 6px; margin-bottom: 10px;">`;
+    }
+    
+    htmlContent += `<div class="multi-link-title"><i class="fa-solid fa-music" style="color: #ff4757;"></i> ${args.title}</div>`;
+    htmlContent += `<div class="multi-link-list">`;
+    
+    args.links.forEach(function(item) {
+        var icon = '<i class="fa-solid fa-link"></i>';
+        if (item.label.includes('X')) {
+            icon = '<i class="fa-brands fa-x-twitter"></i>';
+        } else if (item.label.includes('YouTube') || item.label.includes('ちゃんねる')) {
+            icon = '<i class="fa-brands fa-youtube" style="color: #ff0000;"></i>';
+        }
+
+        htmlContent += `<a href="${item.url}" target="_blank" class="multi-link-item">`;
+        htmlContent += `<span class="multi-link-icon">${icon}</span>`;
+        htmlContent += `<span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.label}</span>`;
+        htmlContent += `</a>`;
+    });
+    
+    htmlContent += `</div>`;
+    tooltip.innerHTML = htmlContent;
+    document.body.appendChild(tooltip);
+
+    hotSpotDiv.addEventListener('mouseenter', function() {
+        var rect = hotSpotDiv.getBoundingClientRect();
+        tooltip.style.display = 'block';
+        tooltip.style.left = (rect.left + window.scrollX + rect.width / 2) + 'px';
+        
+        var tooltipHeight = tooltip.offsetHeight;
+        var spaceAbove = rect.top;
+
+        if (spaceAbove < tooltipHeight + 20) {
+            tooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+            tooltip.style.transform = 'translate(-50%, 0)';
+        } else {
+            tooltip.style.top = (rect.top + window.scrollY) + 'px';
+            tooltip.style.transform = 'translate(-50%, -100%)';
+        }
+    });
+
+    hotSpotDiv.addEventListener('mouseleave', function() {
+        setTimeout(function() {
+            if (!tooltip.matches(':hover')) {
+                tooltip.style.display = 'none';
+            }
+        }, 100);
+    });
+
+    tooltip.addEventListener('mouseleave', function() {
+        tooltip.style.display = 'none';
+    });
+}
+
+// 💡 画像＋長文テキスト＋複数リンクを同時に表示するカスタム関数
+function showStoreDetailsTooltip(hotSpotDiv, args) {
+    hotSpotDiv.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    });
+
+    var tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+
+    var html = '';
+    
+    // 画像
+    if (args.image) {
+        html += '<img src="' + args.image + '" class="tooltip-img">';
+    }
+
+    html += '<div class="tooltip-body">';
+    // タイトル（店舗名）と説明
+    html += '<h3 class="tooltip-title">' + (args.title || '店舗情報') + '</h3>';
+    html += '<p class="tooltip-desc">' + (args.text || '') + '</p>';
+
+    // 営業時間・定休日（メタ情報ボックス）
+    if (args.hours || args.holiday) {
+        html += '<div class="meta-box">';
+        if (args.hours) html += '<div><i class="fa-regular fa-clock"></i> ' + args.hours + '</div>';
+        if (args.holiday) html += '<div><i class="fa-regular fa-calendar-xmark"></i> 定休日: ' + args.holiday + '</div>';
+        html += '</div>';
+    }
+
+    // リンクボタン（Instagram, HP, Menu）
+    if (args.links && args.links.length > 0) {
+        html += '<div class="link-container">';
+        args.links.forEach(function(link) {
+            var icon = '', color = '';
+            if (link.type === 'instagram') { icon = 'fa-brands fa-instagram'; color = '#E1306C'; }
+            else if (link.type === 'website') { icon = 'fa-solid fa-globe'; color = '#005088'; }
+            else if (link.type === 'menu') { icon = 'fa-solid fa-utensils'; color = '#11CAA0'; }
+
+            html += '<a href="' + link.url + '" target="_blank" class="btn-link" style="color:' + color + '">';
+            html += '<i class="' + icon + '"></i></a>';
+        });
+        html += '</div>';
+    }
+    html += '</div>';
+
+    tooltip.innerHTML = html;
+    document.body.appendChild(tooltip);
+
+    // 表示位置の制御
+    hotSpotDiv.addEventListener('mouseenter', function() {
+        var rect = hotSpotDiv.getBoundingClientRect();
+        tooltip.style.display = 'block'; 
+
+        tooltip.style.left = (rect.left + window.scrollX + rect.width / 2) + 'px';
+
+        var tooltipHeight = tooltip.offsetHeight;
+        var spaceAbove = rect.top;
+
+        if (spaceAbove < tooltipHeight + 20) {
+            tooltip.style.top = (rect.bottom + window.scrollY + 10) + 'px';
+            tooltip.style.transform = 'translate(-50%, 0)';
+        } else {
+            tooltip.style.top = (rect.top + window.scrollY) + 'px';
+            tooltip.style.transform = 'translate(-50%, -100%)';
+        }
+    });
+
+    hotSpotDiv.addEventListener('mouseleave', function() {
+        setTimeout(function() { if (!tooltip.matches(':hover')) tooltip.style.display = 'none'; }, 100);
+    });
+
+    tooltip.addEventListener('mouseleave', function() { tooltip.style.display = 'none'; });
+}
+
+var selector = document.getElementById('sceneSelector');
+
+// 1. セレクトボックスを自分で切り替えた時に、その通りのスタート地点へワープする処理
+selector.addEventListener('change', function() {
+    var targetScene = this.value;
+    viewer.loadScene(targetScene, viewer.getPitch(), viewer.getYaw(), viewer.getHfov());
+});
+
+// 2. 矢印で歩いて通りが変わった時に、セレクトボックスの表示も自動で同期させる処理
+viewer.on('scenechange', function(sceneId) {
+    var selector = document.getElementById('sceneSelector');
+    var sceneNum = parseInt(sceneId.replace('scene', ''), 10);
+
+    if (sceneNum >= 1 && sceneNum <= 31) {
+        selector.value = 'scene1';   // 万松寺通
+    } else if (sceneNum >= 32 && sceneNum <= 37) {
+        selector.value = 'scene32';  // 門前町通
+    } else if (sceneNum >= 38 && sceneNum <= 64) {
+        selector.value = 'scene38';  // 東仁王門通
+    } else if ((sceneNum >= 65 && sceneNum <= 87)) {
+        selector.value = 'scene65';  // 新天地通
+    } else if (sceneNum >= 121 && sceneNum <= 134) {
+        selector.value = 'scene121'; // 大須本通 
+    } else if (sceneNum >= 88 && sceneNum <= 134) {
+        selector.value = 'scene88';  // 赤門通 
+    }
+});
+</script>
+
+</body>
+</html>
